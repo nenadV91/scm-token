@@ -16,10 +16,11 @@ contract Ico {
     Status private _status;
     address private _owner;
 
-    uint256 public wethLimit = 10 ether;
+    uint256 public wethLimit = 100 ether;
     uint256 public wethInvested = 0;
 
-    uint256 private _claimDelay = 2 minutes;
+    // uint256 private _claimDelay = 2 minutes;
+    uint256 private _claimDelay = 2 seconds;
     uint256 private _claimWindow = 1 days;
     uint256 private _claimStart = 0;
     uint256 private _claimEnd = 0;

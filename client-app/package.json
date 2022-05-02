@@ -1,0 +1,45 @@
+{
+  "name": "scm-client",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "json-server": "json-server --watch db.json --port 3005"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@ethersproject/bignumber": "^5.4.2",
+    "@ethersproject/experimental": "^5.5.0",
+    "@ethersproject/providers": "^5.5.1",
+    "@ethersproject/units": "^5.4.0",
+    "@mui/icons-material": "^5.3.1",
+    "@mui/material": "^5.4.0",
+    "@reduxjs/toolkit": "^1.7.2",
+    "@walletconnect/ethereum-provider": "^1.7.1",
+    "@web3-react/core": "^6.1.9",
+    "@web3-react/fortmatic-connector": "^6.1.6",
+    "@web3-react/injected-connector": "^6.0.7",
+    "@web3-react/portis-connector": "^6.1.9",
+    "@web3-react/walletconnect-connector": "npm:@web3-react/walletconnect-connector@^7.0.2-alpha.0",
+    "@web3-react/walletlink-connector": "^6.2.5",
+    "autoprefixer": "^10.4.2",
+    "ms.macro": "^2.0.0",
+    "next": "12.0.9",
+    "postcss": "^8.4.5",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-redux": "^7.2.6",
+    "swr": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.13",
+    "@types/react": "17.0.38",
+    "eslint": "8.8.0",
+    "eslint-config-next": "12.0.9",
+    "json-server": "^0.17.0",
+    "typescript": "4.5.5"
+  }
+}

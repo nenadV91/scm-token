@@ -25,10 +25,18 @@ const ModalContent = styled(Box)`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  min-width: 400px;
+  width: 100%;
+  max-width: 300px;
   background-color: ${({ theme }) => theme.palette.background.paper};
   box-shadow: ${({ theme }) => theme?.shadows[4]};
   padding: ${({ theme }) => theme.spacing(2)};
+  border-radius: 12px;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 `;
 
 const SpinnerWrapper = styled(Box)`

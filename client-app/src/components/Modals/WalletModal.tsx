@@ -19,6 +19,8 @@ import {
   useTryActivation,
 } from "state/wallet/hooks";
 import { WalletViews } from "state/wallet/types";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import { AbstractConnector } from "@web3-react/abstract-connector";
 
 const ModalContent = styled(Box)`
   position: absolute;
@@ -26,7 +28,7 @@ const ModalContent = styled(Box)`
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100%;
-  max-width: 300px;
+  max-width: 400px;
   background-color: ${({ theme }) => theme.palette.background.paper};
   box-shadow: ${({ theme }) => theme?.shadows[4]};
   padding: ${({ theme }) => theme.spacing(2)};
@@ -49,6 +51,29 @@ const ErrorText = styled(Typography)`
   color: ${({ theme }) => theme.palette.error.main};
 `;
 
+const WalletButton = styled(Button)`
+  width: 100%;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  color: black;
+  border-radius: 12px;
+  background-color: rgb(237, 238, 242);
+  border: 1px solid rgb(206, 208, 217);
+`;
+
+const ModalActions = styled("div")`
+  width: 100%;
+`;
+
+const ActiveDot = styled(FiberManualRecordIcon)`
+  color: ${({ theme }) => theme.palette.success.light};
+  width: 14px;
+  height: 14px;
+`;
+
 export default function WalletModal() {
   const { error, active, account, connector } = useWeb3React();
 
@@ -63,6 +88,17 @@ export default function WalletModal() {
 
   const previousAccount = usePrevious(account);
   const previousConnector = usePrevious(connector);
+
+  const isActive = useCallback(
+    (inputConnector: AbstractConnector | undefined) => {
+      if (!connector || !inputConnector) {
+        return false;
+      }
+
+      return inputConnector.constructor.name === connector.constructor.name;
+    },
+    [connector]
+  );
 
   useEffect(() => {
     if (isModalOpen) {
@@ -109,18 +145,17 @@ export default function WalletModal() {
       </SpinnerWrapper>
     ) : (
       Object.entries(SUPPORTED_WALLETS).map(([key, { connector, name }]) => (
-        <Button
-          fullWidth
-          key={key}
-          sx={{ marginBottom: "10px" }}
+        <WalletButton
           onClick={() => tryActivation(connector)}
-          variant="contained"
+          variant="outlined"
+          key={key}
         >
-          {name}
-        </Button>
+          <Typography variant="button">{name}</Typography>
+          {isActive(connector) && <ActiveDot />}
+        </WalletButton>
       ))
     );
-  }, [error, tryActivation, walletView]);
+  }, [error, isActive, tryActivation, walletView]);
 
   return (
     <div>
@@ -131,7 +166,7 @@ export default function WalletModal() {
         aria-describedby="modal-modal-description"
       >
         <ModalContent>
-          <Typography mb={2} variant="subtitle1">
+          <Typography mb={2} variant="h6">
             {active ? "Change Wallet" : "Connect Wallet"}
           </Typography>
 
@@ -141,7 +176,7 @@ export default function WalletModal() {
             </ErrorText>
           ) : null}
 
-          <div>{getModalContent()}</div>
+          <ModalActions>{getModalContent()}</ModalActions>
         </ModalContent>
       </Modal>
     </div>

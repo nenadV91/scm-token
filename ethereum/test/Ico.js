@@ -8,7 +8,9 @@ const ICO_MULTIPLIER = 10;
 const ICO_CLAIM_DELAY = 3000;
 
 const withDelay = (fn, delay) => {
-  console.log(`Running function with delay of ${delay / 1000}s`);
+  const space = " ".repeat(8);
+  const dl = delay / 1000;
+  console.log(`${space}running function with delay of ${dl}s`);
 
   return new Promise((resolve, reject) => {
     setTimeout(() => {

@@ -1,8 +1,6 @@
 import { useCallback, useState } from "react";
-import { styled } from "@mui/system";
 import { useWeb3React } from "@web3-react/core";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 import getConnectorType from "utils/getConnectorType";
 import StyledCard from "components/Card";
 import CopyClipboard from "components/CopyClipboard";
@@ -14,87 +12,13 @@ import useScmContract from "hooks/useScmContract";
 import { parseEther } from "@ethersproject/units";
 import useClaimableAmount from "state/ico/hooks/useClaimableAmount";
 import useIcoContract from "state/ico/hooks/useIcoContract";
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import FormHelperText from "@mui/material/FormHelperText";
-
-interface CardRowProps {
-  readonly border: string;
-}
-
-const AccountRow = styled("div")<CardRowProps>`
-  display: flex;
-  justify-content: space-between;
-  border-radius: 14px;
-  padding: 1rem;
-  align-items: center;
-
-  border: ${({ border, theme }) =>
-    border ? `1px dotted ${theme.palette.grey[400]}` : ""};
-`;
-
-const AccountText = styled(Typography)`
-  display: flex;
-  flex-direction: column;
-
-  > strong {
-    font-size: 12px;
-  }
-`;
-
-const CardRow = styled("div")`
-  padding: 0.2rem 1rem;
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-
-  > strong {
-    margin-left: 10px;
-  }
-`;
-
-const CardValue = styled("strong")`
-  margin-left: 10px;
-`;
-
-const CardButton = styled(Button)`
-  margin-left: auto;
-`;
-
-const Line = styled("div")`
-  width: 100%;
-  border-bottom: ${({ theme }) => `1px dotted ${theme.palette.grey[400]}`};
-`;
-
-const InvestBox = styled(Box)`
-  display: flex;
-  width: 100%;
-  margin-top: 10px;
-`;
-
-const InvestField = styled(TextField)`
-  flex: 1;
-`;
-
-const InvestRow = styled(CardRow)`
-  display: flex;
-  flex-direction: column;
-
-  > p {
-    max-width: 350px;
-    text-align: center;
-  }
-`;
+import InvestWeth from "./InvestWeth";
 
 const Connected = () => {
   const { account, connector } = useWeb3React();
 
   const [wethDisbled, setWethDisabled] = useState(false);
   const [claimDisabled, setClaimDisabled] = useState(false);
-
-  const [investAmount, setInvestAmount] = useState(0);
-  const [investError, setInvestError] = useState<null | string>(null);
-  const [investDisabled, setInvestDisabled] = useState(false);
 
   const wethContract = useWethContract();
   const scmContract = useScmContract();
@@ -128,36 +52,6 @@ const Connected = () => {
     });
   }, [icoContract]);
 
-  const handleInputChange = useCallback((event) => {
-    setInvestAmount(event.target.value);
-    setInvestError(null);
-  }, []);
-
-  const handleInvest = useCallback(
-    (event) => {
-      event.preventDefault();
-
-      if (!investAmount || investAmount <= 0) {
-        setInvestError("Insufficient amount");
-        return;
-      }
-
-      setInvestDisabled(true);
-
-      icoContract
-        ?.invest(investAmount)
-        .catch(({ error }) => {
-          if (error.code === -32603) {
-            setInvestError("Insufficient WETH allowance");
-          }
-        })
-        .finally(() => {
-          setInvestDisabled(false);
-        });
-    },
-    [icoContract, investAmount]
-  );
-
   if (!account || !connector) return null;
 
   return (
@@ -175,30 +69,7 @@ const Connected = () => {
         />
       </AccountRow>
 
-      <InvestRow>
-        <Typography variant="body1">
-          Invest certain amount of WETH and receive x10 times of that in SCM
-          token.
-        </Typography>
-
-        <InvestBox onSubmit={handleClaim} component="form">
-          <InvestField
-            onChange={handleInputChange}
-            label="WETH amount"
-            variant="outlined"
-            size="small"
-          />
-
-          <CardButton
-            disabled={investDisabled}
-            onClick={handleInvest}
-            variant="outlined"
-          >
-            Invest WETH
-          </CardButton>
-        </InvestBox>
-        <FormHelperText error>{investError}</FormHelperText>
-      </InvestRow>
+      <InvestWeth />
 
       <Line style={{ marginTop: 25 }} />
 

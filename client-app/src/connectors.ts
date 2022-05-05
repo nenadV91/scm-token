@@ -1,6 +1,10 @@
 import { InjectedConnector } from "@web3-react/injected-connector";
 import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
-import { ALL_SUPPORTED_CHAIN_IDS, INFURA_NETWORK_URLS } from "chains";
+import {
+  ALL_SUPPORTED_CHAIN_IDS,
+  INFURA_NETWORK_URLS,
+  SupportedChainId,
+} from "constants/chains";
 
 export const walletconnect = new WalletConnectConnector({
   supportedChainIds: ALL_SUPPORTED_CHAIN_IDS,
@@ -9,5 +13,5 @@ export const walletconnect = new WalletConnectConnector({
 });
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [1, 4],
+  supportedChainIds: [SupportedChainId.RINKEBY],
 });

@@ -62,7 +62,7 @@ contract Ico {
         }
 
         wethInvested += amount;
-        weth.transferFrom(msg.sender, _owner, amount);
+        weth.transferFrom(msg.sender, address(this), amount);
         investments[msg.sender] += amount;
 
         // when investment goal is reached

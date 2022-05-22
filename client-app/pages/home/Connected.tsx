@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { styled } from "@mui/system";
 import { useWeb3React } from "@web3-react/core";
 import Typography from "@mui/material/Typography";
@@ -11,12 +11,17 @@ import { Contract } from "@ethersproject/contracts";
 import useTokenBalance from "hooks/useTokenBalance";
 import useWethContract from "hooks/useWethContract";
 import useScmContract from "hooks/useScmContract";
-import { parseEther } from "@ethersproject/units";
+import useTokenAllowance from "hooks/useTokenAllowance";
+import { parseEther, formatEther } from "@ethersproject/units";
 import useClaimableAmount from "state/ico/hooks/useClaimableAmount";
 import useIcoContract from "state/ico/hooks/useIcoContract";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import FormHelperText from "@mui/material/FormHelperText";
+import { WETH } from "constants/tokens";
+import { MaxUint256 } from "@ethersproject/constants";
+import { ICO_COTRACT_ADDRESS } from "constants/tokens";
+import useRemaining from "state/ico/hooks/useRemaining";
 
 interface CardRowProps {
   readonly border: string;
@@ -87,24 +92,73 @@ const InvestRow = styled(CardRow)`
 `;
 
 const Connected = () => {
-  const { account, connector } = useWeb3React();
+  const { account, connector, chainId } = useWeb3React();
 
+  // Disabled
   const [wethDisbled, setWethDisabled] = useState(false);
   const [claimDisabled, setClaimDisabled] = useState(false);
+  const [approveDisabled, setApproveDisabled] = useState(false);
 
-  const [investAmount, setInvestAmount] = useState(0);
+  // Investing
+  const [investAmount, setInvestAmount] = useState();
   const [investError, setInvestError] = useState<null | string>(null);
   const [investDisabled, setInvestDisabled] = useState(false);
 
+  // Contracts
   const wethContract = useWethContract();
   const scmContract = useScmContract();
   const icoContract = useIcoContract();
   const claimableAmount = useClaimableAmount();
 
+  // Remaining
+  const remaining = useRemaining();
+  const remainingParsed = useMemo(() => {
+    if (!remaining) {
+      return "";
+    }
+
+    return formatEther(remaining?.toString()).toString();
+  }, [remaining]);
+  const isInvestmentOpen = remaining?.gt(0);
+
+  // Weth
+  const weth = chainId ? WETH[chainId] : undefined;
+  const currentAllowance = useTokenAllowance(
+    weth,
+    account || "",
+    icoContract?.address
+  );
+
+  const parsedInvestAmount = useMemo(() => {
+    if (!investAmount || isNaN(parseFloat(investAmount))) {
+      return "";
+    }
+
+    return parseEther(investAmount).toString();
+  }, [investAmount]);
+
+  const isWethApproved = useMemo(() => {
+    return !currentAllowance?.lessThan(parsedInvestAmount);
+  }, [currentAllowance, parsedInvestAmount]);
+
   const hasClaim = !claimableAmount?.equalTo(0);
 
   const { balance: wethBalance } = useTokenBalance(wethContract as Contract);
   const { balance: scmBalance } = useTokenBalance(scmContract as Contract);
+
+  const handleApproveWeth = useCallback(() => {
+    const icoAddress = chainId ? ICO_COTRACT_ADDRESS[chainId] : undefined;
+
+    if (!account || !icoAddress) {
+      return;
+    }
+
+    setApproveDisabled(true);
+
+    wethContract?.approve(icoAddress, MaxUint256).finally(() => {
+      setApproveDisabled(false);
+    });
+  }, [account, chainId, wethContract]);
 
   const handleAddWeth = useCallback(() => {
     if (!account) {
@@ -137,15 +191,18 @@ const Connected = () => {
     (event) => {
       event.preventDefault();
 
-      if (!investAmount || investAmount <= 0) {
+      if (!parsedInvestAmount) {
         setInvestError("Insufficient amount");
         return;
       }
 
-      setInvestDisabled(true);
+      if (wethBalance?.lessThan(parsedInvestAmount)) {
+        setInvestError("Not enough WETH balance");
+        return;
+      }
 
       icoContract
-        ?.invest(investAmount)
+        ?.invest(parsedInvestAmount)
         .catch(({ error }) => {
           if (error.code === -32603) {
             setInvestError("Insufficient WETH allowance");
@@ -153,9 +210,10 @@ const Connected = () => {
         })
         .finally(() => {
           setInvestDisabled(false);
+          setInvestAmount(undefined);
         });
     },
-    [icoContract, investAmount]
+    [icoContract, parsedInvestAmount, wethBalance]
   );
 
   if (!account || !connector) return null;
@@ -175,69 +233,102 @@ const Connected = () => {
         />
       </AccountRow>
 
-      <InvestRow>
-        <Typography variant="body1">
-          Invest certain amount of WETH and receive x10 times of that in SCM
-          token.
+      {isInvestmentOpen ? (
+        <InvestRow>
+          <Typography variant="body1">
+            Invest certain amount of WETH and receive x10 times of that in SCM
+            token.
+          </Typography>
+
+          <InvestBox onSubmit={handleClaim} component="form">
+            <InvestField
+              onChange={handleInputChange}
+              label="WETH amount"
+              variant="outlined"
+              size="small"
+            />
+
+            {isWethApproved ? (
+              <CardButton
+                disabled={investDisabled}
+                onClick={handleInvest}
+                variant="outlined"
+              >
+                Invest WETH
+              </CardButton>
+            ) : (
+              <CardButton
+                disabled={approveDisabled}
+                onClick={handleApproveWeth}
+                variant="outlined"
+              >
+                Approve WETH
+              </CardButton>
+            )}
+          </InvestBox>
+          <FormHelperText error>{investError}</FormHelperText>
+        </InvestRow>
+      ) : (
+        <Typography textAlign={"center"} variant="body1">
+          Investment phase is over. <br /> You can claim available SCM tokens
+          below.
         </Typography>
-
-        <InvestBox onSubmit={handleClaim} component="form">
-          <InvestField
-            onChange={handleInputChange}
-            label="WETH amount"
-            variant="outlined"
-            size="small"
-          />
-
-          <CardButton
-            disabled={investDisabled}
-            onClick={handleInvest}
-            variant="outlined"
-          >
-            Invest WETH
-          </CardButton>
-        </InvestBox>
-        <FormHelperText error>{investError}</FormHelperText>
-      </InvestRow>
+      )}
 
       <Line style={{ marginTop: 25 }} />
 
-      <CardRow>
-        <Typography variant="caption">WETH balance: </Typography>
-        <Typography variant="body1">
-          <CardValue>{wethBalance?.toFixed(2)}</CardValue>
-        </Typography>
+      {remaining ? (
+        isInvestmentOpen ? (
+          <>
+            <CardRow>
+              <Typography variant="caption">Current WETH balance: </Typography>
+              <Typography variant="body1">
+                <CardValue>{wethBalance?.toFixed(2)}</CardValue>
+              </Typography>
 
-        <CardButton
-          disabled={wethDisbled}
-          onClick={handleAddWeth}
-          variant="outlined"
-        >
-          Get 5 custom WETH
-        </CardButton>
-      </CardRow>
+              <CardButton
+                disabled={wethDisbled}
+                onClick={handleAddWeth}
+                variant="outlined"
+              >
+                Get 5 custom WETH
+              </CardButton>
+            </CardRow>
+            <CardRow>
+              <Typography variant="caption">
+                Remaining ICO investments:{" "}
+              </Typography>
+              <Typography variant="body1">
+                <CardValue>{remainingParsed} WETH</CardValue>
+              </Typography>
+            </CardRow>
+          </>
+        ) : (
+          <>
+            <CardRow>
+              <Typography variant="caption">Claimable SCM: </Typography>
+              <Typography variant="body1">
+                <CardValue>{claimableAmount?.toFixed(2)}</CardValue>
+              </Typography>
 
-      <CardRow>
-        <Typography variant="caption">Claimable SCM: </Typography>
-        <Typography variant="body1">
-          <CardValue>{claimableAmount?.toFixed(2)}</CardValue>
-        </Typography>
+              <CardButton
+                disabled={!hasClaim || claimDisabled}
+                onClick={handleClaim}
+                variant="outlined"
+              >
+                Claim SCM
+              </CardButton>
+            </CardRow>
 
-        <CardButton
-          disabled={!hasClaim || claimDisabled}
-          onClick={handleClaim}
-          variant="outlined"
-        >
-          Claim SCM
-        </CardButton>
-      </CardRow>
-
-      <CardRow>
-        <Typography variant="caption">SCM balance: </Typography>
-        <Typography variant="body1">
-          <CardValue>{scmBalance?.toFixed(2)}</CardValue>
-        </Typography>
-      </CardRow>
+            <CardRow>
+              <Typography variant="caption">SCM balance: </Typography>
+              <Typography variant="body1">
+                <CardValue>{scmBalance?.toFixed(2)}</CardValue>
+              </Typography>
+            </CardRow>
+          </>
+        )
+      ) : null}
     </StyledCard>
   );
 };

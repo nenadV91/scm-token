@@ -3,7 +3,7 @@ import { Token } from "@uniswap/sdk-core";
 
 // WETH
 export const WETH_CONTRACT_ADDRESS: Record<number, string> = {
-  [ChainId.RINKEBY]: "0x63247c1e61a458757ED86Ef407437B6dd56080Fb",
+  [ChainId.RINKEBY]: "0x5B4b3d3e53319a9f57FE62be636b5B76bF8f9A2E",
 };
 
 const WETH_TOKEN_RINKEBY = new Token(
@@ -20,7 +20,7 @@ export const WETH: Record<number, Token> = {
 
 // SCM
 export const SCM_CONTRACT_ADDRESS: Record<number, string> = {
-  [ChainId.RINKEBY]: "0xEE11BEd818ea4351508fd50Ba5d9BcB137c7D5Db",
+  [ChainId.RINKEBY]: "0xdf9E9fd580cae425D821024A99DA855E95fF6F59",
 };
 
 const SCM_TOKEN_RINKEBY = new Token(
@@ -36,7 +36,6 @@ export const SCM: Record<number, Token> = {
 };
 
 // ICO
-
 export const ICO_COTRACT_ADDRESS: Record<number, string> = {
-  [ChainId.RINKEBY]: "0x780C0fF027A8b429E81FDA80914d00a6E9D7DdaC",
+  [ChainId.RINKEBY]: "0xEb426631029e318F96e0F85290048D128A61E928",
 };

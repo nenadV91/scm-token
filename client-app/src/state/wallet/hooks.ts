@@ -6,7 +6,7 @@ import { AbstractConnector } from "@web3-react/abstract-connector";
 import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
 import { AppState } from "state/store";
 import usePrevious from "hooks/usePrevious";
-import { useWeb3React } from "@web3-react/core";
+import { UnsupportedChainIdError, useWeb3React } from "@web3-react/core";
 
 export function useSetWalletView() {
   const dispatch = useDispatch();
@@ -23,13 +23,13 @@ export function useWalletView(): WalletViews {
 export function useSetWalletError() {
   const dispatch = useDispatch();
   return useCallback(
-    (payload: boolean) => dispatch(setWalletError(payload)),
+    (payload: null | string) => dispatch(setWalletError(payload)),
     [dispatch]
   );
 }
 
-export function useWalletError(): boolean {
-  return useSelector((state: AppState) => state.wallet.pendingError);
+export function useWalletError(): null | string {
+  return useSelector((state: AppState) => state.wallet.error);
 }
 
 export function useTryActivation() {
@@ -43,7 +43,7 @@ export function useTryActivation() {
     async (connector: AbstractConnector | undefined) => {
       if (connector !== previousConnector) {
         setWalletView(WalletViews.PENDING);
-        setWalletError(false);
+        setWalletError(null);
       }
 
       if (connector instanceof WalletConnectConnector) {
@@ -52,8 +52,13 @@ export function useTryActivation() {
 
       if (connector) {
         activate(connector, undefined, true).catch((error) => {
+          if (error instanceof UnsupportedChainIdError) {
+            setWalletError("Unsupported chain id");
+          } else {
+            setWalletError("Something went wrong");
+          }
+
           console.log("Error connecting to wallet", error);
-          setWalletError(true);
           setWalletView(WalletViews.ACCOUNT);
         });
       }

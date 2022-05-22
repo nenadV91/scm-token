@@ -4,7 +4,7 @@ import { WalletState, WalletViews } from "./types";
 
 const initialState: WalletState = {
   view: WalletViews.ACCOUNT,
-  pendingError: false,
+  error: null,
 };
 
 export default createReducer(initialState, (builder) => {
@@ -13,6 +13,6 @@ export default createReducer(initialState, (builder) => {
       state.view = payload;
     })
     .addCase(setWalletError, (state, { payload }) => {
-      state.pendingError = payload;
+      state.error = payload;
     });
 });

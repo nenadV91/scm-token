@@ -5,5 +5,5 @@ export enum WalletViews {
 
 export interface WalletState {
   view: WalletViews;
-  pendingError: boolean;
+  error: null | string;
 }
